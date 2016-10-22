@@ -92,6 +92,7 @@ ts-node --compiler ntypescript --project src --ignoreWarnings 2304 hello-world.t
 * **--lazy, -L** Lazily defer TypeScript initialization until first `.ts` file
 * **--no-cache** Skip hitting the compiled JavaScript cache (also `process.env.TS_NODE_CACHE`)
 * **--cache-directory** Configure the TypeScript cache directory (also `process.env.TS_NODE_CACHE_DIRECTORY`)
+* **--log-debug** Log with `ts-node` to help debug issues (also `process.env.TS_NODE_LOG_DEBUG`)
 
 ## Programmatic Usage
 

@@ -70,6 +70,7 @@ export interface Options {
   getFile?: (fileName: string) => string
   fileExists?: (fileName: string) => boolean
   compilerOptions?: any
+  logDebug?: boolean
 }
 
 /**
@@ -103,7 +104,8 @@ const DEFAULTS = {
   project: process.env['TS_NODE_PROJECT'],
   ignore: split(process.env['TS_NODE_IGNORE']),
   ignoreWarnings: split(process.env['TS_NODE_IGNORE_WARNINGS']),
-  fast: yn(process.env['TS_NODE_FAST'])
+  fast: yn(process.env['TS_NODE_FAST']),
+  logDebug: yn(process.env['TS_NODE_LOG_DEBUG'])
 }
 
 /**
@@ -149,6 +151,8 @@ export function register (options: Options = {}): () => Register {
   const cacheDirectory = options.cacheDirectory || DEFAULTS.cacheDirectory || join(tmpdir(), 'ts-node')
   const compilerOptions = extend(DEFAULTS.compilerOptions, options.compilerOptions)
   const originalJsHandler = require.extensions['.js']
+  const logDebug = !!(options.logDebug == null ? DEFAULTS.logDebug : options.logDebug)
+  const log: (msg: string) => void = logDebug ? ((msg) => console.log(`ts-node: ${msg}`)) : (() => undefined)
   let result: Register
 
   const ignore = arrify(
@@ -199,7 +203,7 @@ export function register (options: Options = {}): () => Register {
     // Enable `allowJs` when flag is set.
     if (config.options.allowJs) {
       extensions.push('.js')
-      registerExtension('.js', ignore, service, originalJsHandler)
+      registerExtension('.js', ignore, service, originalJsHandler, log)
     }
 
     // Add all files into the file hash.
@@ -361,8 +365,8 @@ export function register (options: Options = {}): () => Register {
   }
 
   // Eagerly register TypeScript extensions (JavaScript is registered lazily).
-  registerExtension('.ts', ignore, service, originalJsHandler)
-  registerExtension('.tsx', ignore, service, originalJsHandler)
+  registerExtension('.ts', ignore, service, originalJsHandler, log)
+  registerExtension('.tsx', ignore, service, originalJsHandler, log)
 
   // Immediately initialize the TypeScript compiler.
   if (!options.lazy) {
@@ -388,22 +392,27 @@ function registerExtension (
   ext: string,
   ignore: RegExp[],
   service: () => Register,
-  originalHandler: (m: NodeModule, filename: string) => any
+  originalHandler: (m: NodeModule, filename: string) => any,
+  log: (msg: string) => void
 ) {
   const old = require.extensions[ext] || originalHandler
 
-  require.extensions[ext] = function (m, filename) {
-    if (shouldIgnore(filename, ignore, service)) {
-      return old(m, filename)
+  require.extensions[ext] = function (m, fileName) {
+    if (shouldIgnore(fileName, ignore, service)) {
+      return old(m, fileName)
     }
 
     const _compile = m._compile
 
     m._compile = function (code, fileName) {
+      log(`compile ${fileName}`)
+
       return _compile.call(this, service().compile(code, fileName), fileName)
     }
 
-    return old(m, filename)
+    log(`require ${fileName}`)
+
+    return old(m, fileName)
   }
 }
 

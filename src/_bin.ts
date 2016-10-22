@@ -24,11 +24,12 @@ interface Argv {
   ignoreWarnings?: string | string[]
   disableWarnings?: boolean
   compilerOptions?: any
+  logDebug?: boolean
   _: string[]
 }
 
 const strings = ['eval', 'print', 'compiler', 'project', 'ignoreWarnings', 'require', 'cacheDirectory', 'ignore']
-const booleans = ['help', 'fast', 'lazy', 'version', 'disableWarnings', 'cache']
+const booleans = ['help', 'fast', 'lazy', 'version', 'disableWarnings', 'cache', 'logDebug']
 
 const aliases: { [key: string]: string[] } = {
   help: ['h'],
@@ -43,7 +44,8 @@ const aliases: { [key: string]: string[] } = {
   cacheDirectory: ['cache-directory'],
   ignoreWarnings: ['I', 'ignore-warnings'],
   disableWarnings: ['D', 'disable-warnings'],
-  compilerOptions: ['O', 'compiler-options']
+  compilerOptions: ['O', 'compiler-options'],
+  logDebug: ['log-debug']
 }
 
 let stop = process.argv.length
@@ -155,6 +157,7 @@ const service = register({
   ignoreWarnings: argv.ignoreWarnings,
   disableWarnings: argv.disableWarnings,
   compilerOptions: parse(argv.compilerOptions),
+  logDebug: argv.logDebug,
   getFile: isEval ? getFileEval : getFile,
   fileExists: isEval ? fileExistsEval : fileExists
 })
